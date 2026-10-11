@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class PrestamoController extends Controller
 {
+    const RELACIONES = ['alumno', 'detalles.equipo'];
+
     /**
      * Display a listing of the resource.
      */
@@ -22,7 +24,7 @@ class PrestamoController extends Controller
     {
         try {
             $prestamos = new PrestamoCollection(
-                Prestamo::with('alumno', 'detalles.equipo')->orderBy('fecha_salida', 'desc')->paginate(15)
+                Prestamo::with(self::RELACIONES)->orderBy('fecha_salida', 'desc')->paginate(15)
             );
             return ApiResponse::success('Listado de préstamos', 200, $prestamos);
         } catch (Exception $e) {
@@ -55,7 +57,7 @@ class PrestamoController extends Controller
             if ($prestamo === null) {
                 return ApiResponse::error('Uno o más equipos ya no están disponibles', 422);
             }
-            return ApiResponse::success('Préstamo registrado correctamente', 201, new PrestamoResource($prestamo->load('alumno', 'detalles.equipo')));
+            return ApiResponse::success('Préstamo registrado correctamente', 201, new PrestamoResource($prestamo->load(self::RELACIONES)));
         } catch (Exception $e) {
             Log::error('Error al registrar préstamo', ['exception' => $e]);
             return ApiResponse::error('No se pudo registrar el préstamo', 500);
@@ -68,7 +70,7 @@ class PrestamoController extends Controller
     public function show(Prestamo $prestamo)
     {
         try {
-            return ApiResponse::success('Información del préstamo', 200, new PrestamoResource($prestamo->load('alumno', 'detalles.equipo')));
+            return ApiResponse::success('Información del préstamo', 200, new PrestamoResource($prestamo->load(self::RELACIONES)));
         } catch (Exception $e) {
             Log::error('Error al consultar préstamo', ['exception' => $e]);
             return ApiResponse::error('No se pudo obtener el préstamo', 500);
@@ -82,7 +84,7 @@ class PrestamoController extends Controller
     {
         try {
             $prestamo->update($request->validated());
-            return ApiResponse::success('Préstamo actualizado correctamente', 200, new PrestamoResource($prestamo->refresh()->load('alumno', 'detalles.equipo')));
+            return ApiResponse::success('Préstamo actualizado correctamente', 200, new PrestamoResource($prestamo->refresh()->load(self::RELACIONES)));
         } catch (Exception $e) {
             Log::error('Error al actualizar préstamo', ['exception' => $e]);
             return ApiResponse::error('No se pudo actualizar el préstamo', 500);
@@ -130,7 +132,7 @@ class PrestamoController extends Controller
                     ->update($cambios);
                 Equipo::whereIn('id', $equipoIds)->update(['estado' => Equipo::DISPONIBLE]);
             });
-            return ApiResponse::success('Devolución registrada correctamente', 200, new PrestamoResource($prestamo->refresh()->load('alumno', 'detalles.equipo')));
+            return ApiResponse::success('Devolución registrada correctamente', 200, new PrestamoResource($prestamo->refresh()->load(self::RELACIONES)));
         } catch (Exception $e) {
             Log::error('Error al registrar devolución', ['exception' => $e]);
             return ApiResponse::error('No se pudo registrar la devolución', 500);
