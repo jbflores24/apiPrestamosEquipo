@@ -30,6 +30,7 @@ return new class extends Migration
                 ->on('equipos')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
+            $table->unique(['prestamo_id', 'equipo_id']);
             $table->timestamps();
         });
     }

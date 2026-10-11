@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class PrestamoController extends Controller
 {
-    const RELACIONES = ['alumno', 'detalles.equipo'];
+    const RELACIONES = ['alumno', 'detalles.equipo', 'detalles.prestamo'];
 
     /**
      * Display a listing of the resource.

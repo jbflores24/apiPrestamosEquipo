@@ -24,6 +24,6 @@ class Prestamo extends Model
     }
 
     public function detalles(){
-        return $this->hasMany(DetallePrestamo::class)->chaperone();
+        return $this->hasMany(DetallePrestamo::class);
     }
 }
