@@ -19,7 +19,7 @@ class AlumnoResource extends JsonResource
             'matricula' => $this->matricula,
             'nombre' => $this->nombre,
             'carrera' => $this->carrera,
-            'prestamos' => new PrestamoCollection($this->whenLoaded('prestamos')),
+            'prestamos' => PrestamoResource::collection($this->whenLoaded('prestamos')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ]);
