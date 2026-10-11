@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Responses\ApiResponse;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,23 +17,24 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
+    ->withMiddleware(function (Middleware $middleware) {
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(fn (Request $request) => $request->is('api/*') || $request->expectsJson());
 
         $exceptions->render(function (Throwable $e, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
             }
-
-            return match (true) {
-                $e instanceof ValidationException => ApiResponse::error('Los datos enviados no son válidos', 422, $e->errors()),
-                $e instanceof ModelNotFoundException,
-                $e instanceof NotFoundHttpException => ApiResponse::error('Recurso no encontrado', 404),
-                $e instanceof AuthenticationException => ApiResponse::error('No autenticado', 401),
-                $e instanceof HttpExceptionInterface => ApiResponse::error('No se pudo procesar la solicitud', $e->getStatusCode()),
-                default => ApiResponse::error('Ocurrió un error interno en el servidor', 500),
-            };
+            if ($e instanceof ValidationException) {
+                return ApiResponse::error('Los datos enviados no son válidos', 422, $e->errors());
+            }
+            if ($e instanceof ModelNotFoundException || $e instanceof NotFoundHttpException) {
+                return ApiResponse::error('Recurso no encontrado', 404);
+            }
+            if ($e instanceof HttpExceptionInterface) {
+                return ApiResponse::error('No se pudo procesar la solicitud', $e->getStatusCode());
+            }
+            return ApiResponse::error('Ocurrió un error interno en el servidor', 500);
         });
     })->create();

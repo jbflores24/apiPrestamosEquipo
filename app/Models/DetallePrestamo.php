@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Carbon;
 
@@ -12,37 +11,24 @@ class DetallePrestamo extends Pivot
 
     public $incrementing = true;
 
-    protected $fillable = ['prestamo_id', 'equipo_id', 'fecha_devolucion_real', 'observaciones'];
+    protected $fillable = [
+        'prestamo_id',
+        'equipo_id',
+        'fecha_devolucion_real',
+        'observaciones'
+    ];
 
-    protected $appends = ['dias_retraso'];
-
-    protected $hidden = ['prestamo'];
-
-    protected function casts(): array
-    {
-        return ['fecha_devolucion_real' => 'date:Y-m-d'];
-    }
-
-    public function prestamo(): BelongsTo
-    {
+    public function prestamo(){
         return $this->belongsTo(Prestamo::class);
     }
 
-    public function equipo(): BelongsTo
-    {
+    public function equipo(){
         return $this->belongsTo(Equipo::class);
     }
 
-    public function getDiasRetrasoAttribute(): int
-    {
-        $esperada = $this->prestamo?->fecha_devolucion_esperada;
-
-        if ($esperada === null) {
-            return 0;
-        }
-
+    public function getDiasRetrasoAttribute(){
+        $esperada = Carbon::parse($this->prestamo->fecha_devolucion_esperada)->startOfDay();
         $fin = $this->fecha_devolucion_real ?? Carbon::today();
-
-        return max(0, (int) $esperada->startOfDay()->diffInDays($fin->copy()->startOfDay(), false));
+        return max(0, (int) $esperada->diffInDays(Carbon::parse($fin)->startOfDay(), false));
     }
 }

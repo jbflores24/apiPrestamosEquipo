@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('alumnos', function (Blueprint $table) {
@@ -14,12 +17,15 @@ return new class extends Migration
             $table->collation = 'utf8mb4_unicode_ci';
             $table->id();
             $table->string('matricula', 20)->unique();
-            $table->string('nombre', 150);
-            $table->string('carrera', 150);
+            $table->string('nombre');
+            $table->string('carrera');
             $table->timestamps();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('alumnos');

@@ -3,44 +3,84 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AlumnoRequest;
+use App\Http\Resources\AlumnoCollection;
+use App\Http\Resources\AlumnoResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Alumno;
-use Illuminate\Http\JsonResponse;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class AlumnoController extends Controller
 {
-    public function index(): JsonResponse
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
-        return ApiResponse::success(Alumno::orderBy('nombre')->paginate(15), 'Alumnos obtenidos correctamente');
-    }
-
-    public function store(AlumnoRequest $request): JsonResponse
-    {
-        $alumno = Alumno::create($request->validated());
-
-        return ApiResponse::success($alumno, 'Alumno creado correctamente', 201);
-    }
-
-    public function show(Alumno $alumno): JsonResponse
-    {
-        return ApiResponse::success($alumno, 'Alumno obtenido correctamente');
-    }
-
-    public function update(AlumnoRequest $request, Alumno $alumno): JsonResponse
-    {
-        $alumno->update($request->validated());
-
-        return ApiResponse::success($alumno->fresh(), 'Alumno actualizado correctamente');
-    }
-
-    public function destroy(Alumno $alumno): JsonResponse
-    {
-        if ($alumno->prestamos()->exists()) {
-            return ApiResponse::error('No se puede eliminar un alumno con préstamos registrados', 409);
+        try {
+            $alumnos = new AlumnoCollection(Alumno::orderBy('nombre', 'asc')->paginate(15));
+            return ApiResponse::success('Listado de alumnos', 200, $alumnos);
+        } catch (Exception $e) {
+            Log::error('Error al listar alumnos', ['exception' => $e]);
+            return ApiResponse::error('No se pudo obtener el listado de alumnos', 500);
         }
+    }
 
-        $alumno->delete();
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(AlumnoRequest $request)
+    {
+        try {
+            $alumno = Alumno::create($request->validated())->refresh();
+            return ApiResponse::success('Alumno creado correctamente', 201, new AlumnoResource($alumno->load('prestamos')));
+        } catch (Exception $e) {
+            Log::error('Error al crear alumno', ['exception' => $e]);
+            return ApiResponse::error('No se pudo crear el alumno', 500);
+        }
+    }
 
-        return ApiResponse::success(null, 'Alumno eliminado correctamente');
+    /**
+     * Display the specified resource.
+     */
+    public function show(Alumno $alumno)
+    {
+        try {
+            return ApiResponse::success('Información del alumno', 200, new AlumnoResource($alumno->load('prestamos')));
+        } catch (Exception $e) {
+            Log::error('Error al consultar alumno', ['exception' => $e]);
+            return ApiResponse::error('No se pudo obtener el alumno', 500);
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(AlumnoRequest $request, Alumno $alumno)
+    {
+        try {
+            $alumno->update($request->validated());
+            return ApiResponse::success('Alumno actualizado correctamente', 200, new AlumnoResource($alumno->refresh()));
+        } catch (Exception $e) {
+            Log::error('Error al actualizar alumno', ['exception' => $e]);
+            return ApiResponse::error('No se pudo actualizar el alumno', 500);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Alumno $alumno)
+    {
+        try {
+            if ($alumno->prestamos()->exists()) {
+                return ApiResponse::error('No se puede eliminar un alumno con préstamos registrados', 409);
+            }
+            $alumno->delete();
+            return ApiResponse::success('Alumno eliminado correctamente', 200);
+        } catch (Exception $e) {
+            Log::error('Error al eliminar alumno', ['exception' => $e]);
+            return ApiResponse::error('No se pudo eliminar el alumno', 500);
+        }
     }
 }
