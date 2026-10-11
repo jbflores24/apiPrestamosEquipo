@@ -571,7 +571,7 @@
                         "description": "",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"fecha_devolucion_esperada\": \"2026-10-20\"\n}",
+                            "raw": "{\n    \"fecha_salida\": \"2026-10-01\",\n    \"fecha_devolucion_esperada\": \"2026-10-20\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

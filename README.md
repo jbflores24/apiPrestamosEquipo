@@ -36,6 +36,73 @@ Todas las respuestas tienen la misma forma:
 }
 ```
 
+#### Listados paginados
+
+En los listados, `data` contiene `items` (hasta 15 registros) y `pagination`. Otra página se pide con `?page=2`.
+
+```json
+{
+    "message": "Listado de avisos",
+    "statusCode": 200,
+    "error": false,
+    "data": {
+        "items": [
+            {
+                "id": 3,
+                "titulo": "Mantenimiento de proyectores",
+                "texto": "Un proyector estará fuera de servicio por mantenimiento.",
+                "fecha": "2026-10-08",
+                "created_at": "2026-10-11T12:10:59.000000Z",
+                "updated_at": "2026-10-11T12:10:59.000000Z"
+            }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 15,
+            "total": 3
+        }
+    }
+}
+```
+
+#### Errores de validación (422)
+
+En un 422, `error` es `true` y `data` es un mapa de campo a lista de mensajes. Las claves de los elementos de un arreglo llevan el índice, por ejemplo `equipos.0`.
+
+```json
+{
+    "message": "Los datos enviados no son válidos",
+    "statusCode": 422,
+    "error": true,
+    "data": {
+        "matricula": [
+            "El valor de matrícula ya está registrado."
+        ]
+    }
+}
+```
+
+#### Consulta de un registro
+
+`GET http://127.0.0.1:8000/api/aviso/1` responde **200**:
+
+```json
+{
+    "message": "Información del aviso",
+    "statusCode": 200,
+    "error": false,
+    "data": {
+        "id": 1,
+        "titulo": "Inventario de equipos",
+        "texto": "Se realizará el inventario general el próximo lunes.",
+        "fecha": "2026-10-05",
+        "created_at": "2026-10-11T12:10:59.000000Z",
+        "updated_at": "2026-10-11T12:10:59.000000Z"
+    }
+}
+```
+
 ## Prerrequisitos
 
 | Herramienta | Versión requerida | Comando para verificar |
@@ -161,7 +228,7 @@ Todas las rutas llevan el prefijo `/api`. Los listados están paginados de 15 en
 | GET | `/api/prestamo` | Lista los préstamos con su alumno y sus equipos. | 200 |
 | POST | `/api/prestamo` | Registra un préstamo con uno o más equipos. | 201, o 422 si un equipo no está disponible |
 | GET | `/api/prestamo/{prestamo}` | Consulta un préstamo. | 200 |
-| PUT/PATCH | `/api/prestamo/{prestamo}` | Actualiza las fechas o el alumno del préstamo. | 200 |
+| PUT/PATCH | `/api/prestamo/{prestamo}` | Actualiza las fechas y, opcionalmente, el alumno del préstamo. Exige `fecha_salida` y `fecha_devolucion_esperada` juntas. | 200, o 422 si falta una fecha |
 | DELETE | `/api/prestamo/{prestamo}` | Elimina un préstamo y libera sus equipos pendientes. | 200 |
 | POST | `/api/prestamo/{prestamo}/devolucion` | Registra la devolución y deja los equipos disponibles. | 200 |
 
@@ -170,6 +237,25 @@ Otros códigos que puede devolver la API:
 - **422:** los datos enviados no son válidos (campos faltantes, matrícula o código repetidos, fechas incorrectas).
 - **404:** el registro solicitado no existe.
 - **409:** no se puede eliminar un alumno o un equipo con préstamos registrados, ni modificar un equipo que está prestado.
+
+### Actualizar un préstamo
+
+`PUT` y `PATCH` a `/api/prestamo/{prestamo}` exigen `fecha_salida` y `fecha_devolucion_esperada` juntas, en formato `YYYY-MM-DD`, y la segunda debe ser igual o posterior a la primera. `alumno_id` es opcional. Los equipos no se pueden cambiar y el campo `equipos` se ignora.
+
+Si se envía solo una de las dos fechas, la API responde **422** con la clave del campo faltante:
+
+```json
+{
+    "message": "Los datos enviados no son válidos",
+    "statusCode": 422,
+    "error": true,
+    "data": {
+        "fecha_salida": [
+            "El campo fecha de salida es obligatorio."
+        ]
+    }
+}
+```
 
 ### Registrar una devolución
 

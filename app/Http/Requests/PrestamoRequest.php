@@ -23,11 +23,10 @@ class PrestamoRequest extends FormRequest
     public function rules(): array
     {
         $crear = $this->isMethod('POST');
-        $regla = $crear ? 'required' : 'sometimes|required';
         $reglas = [
-            'alumno_id' => $regla.'|integer|exists:alumnos,id',
-            'fecha_salida' => $regla.'|date_format:Y-m-d',
-            'fecha_devolucion_esperada' => $regla.'|date_format:Y-m-d|after_or_equal:fecha_salida'
+            'alumno_id' => ($crear ? 'required' : 'sometimes|required').'|integer|exists:alumnos,id',
+            'fecha_salida' => 'required|date_format:Y-m-d',
+            'fecha_devolucion_esperada' => 'required|date_format:Y-m-d|after_or_equal:fecha_salida'
         ];
         if ($crear) {
             $reglas['equipos'] = 'required|array|min:1';
